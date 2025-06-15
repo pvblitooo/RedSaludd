@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ingresar - RedSalud</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7f9;
+        }
+        .login-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+        .login-image {
+            flex: 1;
+            background: url('https://www.redsalud.cl/wp-content/uploads/2023/08/clinica-vitacura.jpg') no-repeat center center;
+            background-size: cover;
+        }
+        .login-form-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-form h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .login-form p {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        .submit-button {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 6px;
+            background-color: #007bff; /* Azul del prototipo */
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .form-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .form-footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .errorlist { /* Estilos para los errores de Django */
+            list-style: none;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-image"></div>
+        <div class="login-form-container">
+            <div class="login-form">
+                <h1>Ingresar</h1>
+                <p>Inicia sesión con tus credenciales</p>
+
+                {% if form.errors %}
+                    {{ form.errors }}
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_username">Usuario</label>
+                        <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="254" required id="id_username">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_password">Contraseña</label>
+                        <input type="password" name="password" autocomplete="current-password" required id="id_password">
+                    </div>
+                    <button type="submit" class="submit-button">Iniciar sesión</button>
+                </form>
+                <div class="form-footer">
+                    <a href="#">¿Olvidaste tu contraseña?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

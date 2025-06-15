@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profesionales - RedSalud</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- VARIABLES DE COLOR (basadas en tu prototipo) --- */
+        :root {
+            --color-primario: #00A79D; /* Verde azulado de los botones */
+            --color-fondo: #f4f7f9;     /* Gris claro del fondo de la página */
+            --color-blanco: #ffffff;
+            --color-texto: #333;
+            --color-borde: #e0e6ed;
+            --color-sombra: rgba(0, 0, 0, 0.05);
+            --color-activo: #28a745;    /* Verde para "Sí" */
+            --color-inactivo: #dc3545;  /* Rojo para "No" */
+        }
+
+        /* --- ESTILOS GENERALES --- */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--color-fondo);
+            color: var(--color-texto);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: var(--color-blanco);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--color-sombra);
+        }
+
+        h1 {
+            font-weight: 700;
+            color: var(--color-texto);
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--color-borde);
+        }
+
+        .nav-button {
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            color: var(--color-primario);
+            background-color: transparent;
+            border: 1px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .nav-button:hover {
+            border-color: var(--color-primario);
+            background-color: #e6f6f5;
+        }
+
+        .nav-button.active {
+            background-color: var(--color-primario);
+            color: var(--color-blanco);
+            border-color: var(--color-primario);
+        }
+
+        /* --- FILTROS DE BÚSQUEDA --- */
+        .filtros-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: center;
+        }
+        .filtros-container input,
+        .filtros-container select {
+            padding: 0.75rem;
+            border: 1px solid var(--color-borde);
+            border-radius: 6px;
+            font-size: 1rem;
+            flex-grow: 1;
+        }
+
+        /* --- TABLA DE PROFESIONALES --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-borde);
+        }
+
+        thead {
+            background-color: var(--color-fondo);
+        }
+
+        th {
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        /* --- ESTILOS PARA CELDAS ESPECÍFICAS --- */
+        .status-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            color: var(--color-blanco);
+            font-weight: 500;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        .status-active {
+            background-color: var(--color-activo);
+        }
+
+        .status-inactive {
+            background-color: var(--color-inactivo);
+        }
+
+        .action-button {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #fff;
+            color: var(--color-primario);
+            border: 1px solid var(--color-primario);
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .action-button:hover {
+            background-color: var(--color-primario);
+            color: var(--color-blanco);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Profesionales - Red Salud</h1>
+
+        <nav class="main-nav">
+            <a href="{% url 'gestion-box-page' %}" class="nav-button">Gestión de Box</a>
+            <a href="{% url 'professionals-page' %}" class="nav-button active">Profesionales</a>
+        </nav>
+
+        <div class="filtros-container">
+            <input type="text" id="search-name" placeholder="Buscar por nombre...">
+            <select id="filter-specialty">
+                <option value="">Todas las especialidades</option>
+            </select>
+            <select id="filter-floor">
+                <option value="">Todos los pisos</option>
+            </select>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>RUT</th>
+                    <th>Correo</th>
+                    <th>Teléfono</th>
+                    <th>Piso</th>
+                    <th>Agenda Activa</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="professionals-table-body">
+                <tr><td colspan="7" style="text-align: center;">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hacemos una llamada a nuestra API para obtener los datos
+            fetch('/api/profesionales/')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('professionals-table-body');
+                    tbody.innerHTML = ''; // Limpiamos el mensaje "Cargando..."
+
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay profesionales registrados.</td></tr>';
+                        return;
+                    }
+                    
+                    data.forEach(profesional => {
+                        // Creamos la píldora de estado dinámicamente
+                        const statusPill = profesional.agenda_activa
+                            ? '<span class="status-pill status-active">Sí</span>'
+                            : '<span class="status-pill status-inactive">No</span>';
+
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${profesional.nombre}</td>
+                            <td>${profesional.rut}</td>
+                            <td>${profesional.correo}</td>
+                            <td>${profesional.telefono}</td>
+                            <td>${profesional.piso || 'N/A'}</td>
+                            <td>${statusPill}</td>
+                            <td>
+                                <a href="#" class="action-button">Ver Detalles</a>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al cargar los profesionales:', error);
+                    const tbody = document.getElementById('professionals-table-body');
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Error al cargar los datos.</td></tr>';
+                });
+        });
+    </script>
+</body>
+</html>

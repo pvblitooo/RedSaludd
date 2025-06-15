@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Box - RedSalud</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- VARIABLES DE COLOR --- */
+        :root {
+            --color-primario: #00A79D;
+            --color-fondo: #f4f7f9;
+            --color-blanco: #ffffff;
+            --color-texto: #333;
+            --color-borde: #e0e6ed;
+            --color-sombra: rgba(0, 0, 0, 0.05);
+            --color-disponible: #d4edda;
+            --color-texto-disponible: #155724;
+            --color-ocupado: #f8d7da;
+            --color-texto-ocupado: #721c24;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--color-fondo);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 95%;
+        }
+
+        .panel {
+            background-color: var(--color-blanco);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--color-sombra);
+        }
+
+        /* --- CABECERA Y CONTROLES --- */
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-controls h1 {
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .controls select {
+            padding: 0.75rem;
+            border: 1px solid var(--color-borde);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .save-button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--color-primario);
+            color: var(--color-blanco);
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+         .main-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--color-borde);
+        }
+
+        .nav-button {
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            color: var(--color-primario);
+            background-color: transparent;
+            border: 1px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .nav-button:hover {
+            border-color: var(--color-primario);
+            background-color: #e6f6f5;
+        }
+
+        .nav-button.active {
+            background-color: var(--color-primario);
+            color: var(--color-blanco);
+            border-color: var(--color-primario);
+        }
+
+        /* --- GRILLA DE HORARIOS --- */
+        .schedule-grid-container {
+            display: grid;
+            border: 1px solid var(--color-borde);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .grid-header-row {
+            display: grid;
+            grid-template-columns: 100px repeat(12, 1fr);
+            background-color: #f9fafb;
+            border-bottom: 1px solid var(--color-borde);
+        }
+
+        .grid-header-cell {
+            padding: 0.75rem;
+            text-align: center;
+            font-weight: 500;
+            color: #666;
+            font-size: 0.9rem;
+            border-right: 1px solid var(--color-borde);
+        }
+        .grid-header-cell:last-child {
+            border-right: none;
+        }
+        .empty-header-cell {
+            border-right: 1px solid var(--color-borde);
+        }
+
+        .box-row {
+            display: grid;
+            grid-template-columns: 100px repeat(12, 1fr);
+            border-bottom: 1px solid var(--color-borde);
+        }
+        .box-row:last-child {
+            border-bottom: none;
+        }
+
+        .box-label-cell {
+            padding: 0.75rem;
+            text-align: right;
+            font-weight: 700;
+            color: var(--color-texto);
+            border-right: 1px solid var(--color-borde);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .time-slot {
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid var(--color-borde);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .time-slot:last-child {
+            border-right: none;
+        }
+
+        .time-slot.disponible {
+            background-color: var(--color-disponible);
+            color: var(--color-texto-disponible);
+        }
+
+        .time-slot.ocupado {
+            background-color: var(--color-ocupado);
+            color: var(--color-texto-ocupado);
+            font-size: 0.75rem;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0.5rem;
+            cursor: not-allowed;
+        }
+
+        .ocupado .profesional {
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+        .ocupado .especialidad {
+            font-style: italic;
+            display: block;
+            font-size: 0.7rem;
+        }
+
+        /* --- ESTILOS DEL MODAL --- */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--color-blanco);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--color-borde);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .box-info {
+            display: flex;
+            justify-content: space-between;
+            background-color: var(--color-fondo);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--color-borde);
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .form-group input:disabled {
+            background-color: #eee;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+            border-top: 1px solid var(--color-borde);
+            padding-top: 1rem;
+        }
+
+        .modal-footer button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--color-borde);
+        }
+        .cancel-button {
+            background-color: var(--color-blanco);
+            color: var(--color-texto);
+        }
+        .submit-button {
+            background-color: var(--color-primario);
+            color: var(--color-blanco);
+            border-color: var(--color-primario);
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <div class="header-controls">
+            <h1>Gestión de Box - RedSalud</h1>
+            <div class="controls">
+                <select id="floor-filter">
+                    <option value="4" selected>Piso 4</option>
+                    <option value="5">Piso 5</option>
+                </select>
+                <input type="date" id="date-selector" style="padding: 0.65rem; border: 1px solid var(--color-borde); border-radius: 6px; font-size: 1rem;">
+                <button class="save-button">Guardar Cambios</button>
+                <form method="post" action="{% url 'logout' %}" style="margin: 0; padding: 0; display: inline;">
+                        {% csrf_token %}
+                <button type="submit" style="background:none; border:none; color:#007bff; cursor:pointer; font-size: 1rem; margin-left: 1rem; padding: 0;">
+        Cerrar Sesión
+    </button>
+</form>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <a href="{% url 'gestion-box-page' %}" class="nav-button active">Gestión de Box</a>
+            <a href="{% url 'professionals-page' %}" class="nav-button">Profesionales</a>
+        </nav>
+        
+        <div class="panel">
+            <div id="schedule-grid-container">
+                <p style="text-align: center;">Cargando horario...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="assign-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Asignar Box</h2>
+                <button class="close-button" id="close-modal-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="box-info">
+                    <span><strong>Box Seleccionado:</strong> <span id="modal-box-num"></span></span>
+                    <span><strong>Hora de Inicio:</strong> <span id="modal-hora-inicio"></span></span>
+                </div>
+                <form id="assign-form">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="profesional-select">Profesional</label>
+                        <select id="profesional-select" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="especialidad-display">Especialidad</label>
+                        <input type="text" id="especialidad-display" disabled>
+                    </div>
+                     <div class="form-group">
+                        <label for="hora-fin-select">Hora de Fin</label>
+                        <select id="hora-fin-select" required></select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="cancel-button" id="cancel-modal-button">Cancelar</button>
+                        <button type="submit" class="submit-button">Guardar Asignación</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- SELECTORES DE ELEMENTOS ---
+        const gridContainer = document.getElementById('schedule-grid-container');
+        const floorFilter = document.getElementById('floor-filter');
+        const dateSelector = document.getElementById('date-selector');
+        const modal = document.getElementById('assign-modal');
+        const modalTitle = modal.querySelector('h2');
+        const submitButton = modal.querySelector('.submit-button');
+        const closeModalButton = document.getElementById('close-modal-button');
+        const cancelModalButton = document.getElementById('cancel-modal-button');
+        const assignForm = document.getElementById('assign-form');
+        const profesionalSelect = document.getElementById('profesional-select');
+        const especialidadDisplay = document.getElementById('especialidad-display');
+        const horaFinSelect = document.getElementById('hora-fin-select');
+        
+        // ⭐️ Se crea dinámicamente el botón de eliminar y se añade al modal
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.textContent = 'Eliminar Cita';
+        deleteButton.className = 'cancel-button';
+        deleteButton.style.color = '#721c24';
+        deleteButton.style.borderColor = '#f5c6cb';
+        modal.querySelector('.modal-footer').prepend(deleteButton);
+
+
+        // --- DATOS GLOBALES Y CONFIGURACIÓN ---
+        let profesionalesData = [];
+        let boxesData = [];
+        const HORAS_OPERACION = [ '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00' ];
+
+        function getAuthenticatedHeaders() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            return { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken };
+        }
+
+        async function fetchBoxes() {
+            try {
+                const response = await fetch('/api/boxes/', { headers: getAuthenticatedHeaders() });
+                if (!response.ok) throw new Error('No se pudo autenticar para obtener los boxes.');
+                boxesData = await response.json();
+            } catch (error) {
+                console.error('Error al cargar los boxes:', error);
+                alert('Error al cargar datos iniciales. Por favor, recargue la página.');
+            }
+        }
+
+        async function fetchProfesionales() {
+            try {
+                const response = await fetch('/api/profesionales/', { headers: getAuthenticatedHeaders() });
+                if (!response.ok) throw new Error('No se pudo autenticar para obtener los profesionales.');
+                profesionalesData = await response.json();
+            } catch (error) {
+                console.error('Error al cargar profesionales:', error);
+                alert('Error al cargar datos iniciales. Por favor, recargue la página.');
+            }
+        }
+
+        function renderGrid(piso) {
+            gridContainer.innerHTML = '';
+            const headerRow = document.createElement('div');
+            headerRow.className = 'grid-header-row';
+            headerRow.innerHTML = '<div class="grid-header-cell empty-header-cell"></div>';
+            HORAS_OPERACION.forEach(hora => {
+                headerRow.innerHTML += `<div class="grid-header-cell">${hora}</div>`;
+            });
+            gridContainer.appendChild(headerRow);
+            const boxesDelPiso = boxesData.filter(box => box.piso == piso);
+            boxesDelPiso.forEach(box => {
+                const boxRow = document.createElement('div');
+                boxRow.className = 'box-row';
+                boxRow.innerHTML = `<div class="box-label-cell">Box ${box.numero}</div>`;
+                HORAS_OPERACION.forEach(hora => {
+                    const timeSlotCell = document.createElement('div');
+                    timeSlotCell.className = 'time-slot disponible';
+                    timeSlotCell.dataset.boxNum = box.numero;
+                    timeSlotCell.dataset.boxId = box.id;
+                    timeSlotCell.dataset.hora = hora;
+                    timeSlotCell.textContent = 'Disponible';
+                    boxRow.appendChild(timeSlotCell);
+                });
+                gridContainer.appendChild(boxRow);
+            });
+        }
+        
+        // ⭐️ MODIFICADO: Ahora guarda el ID de la asignación en la celda
+        async function fetchAndDisplaySchedule(piso, fecha) {
+            renderGrid(piso);
+            const url = `/api/asignaciones/?piso=${piso}&fecha=${fecha}`;
+            try {
+                const response = await fetch(url, { headers: getAuthenticatedHeaders() });
+                if (!response.ok) throw new Error('No se pudo obtener el horario.');
+                const asignaciones = await response.json();
+                asignaciones.forEach(asignacion => {
+                    const horaInicio = asignacion.hora_inicio.substring(0, 5);
+                    const boxNum = asignacion.box.split(' ')[1];
+                    const cell = gridContainer.querySelector(`.time-slot[data-box-num='${boxNum}'][data-hora='${horaInicio}']`);
+                    if (cell) {
+                        cell.classList.remove('disponible');
+                        cell.classList.add('ocupado');
+                        cell.dataset.assignmentId = asignacion.id; // <-- Guardamos el ID de la cita
+                        cell.innerHTML = `<span class="profesional">${asignacion.profesional.nombre}</span><span class="especialidad">${asignacion.profesional.especialidad.nombre}</span>`;
+                    }
+                });
+            } catch (error) {
+                console.error('Error al cargar el horario:', error);
+                gridContainer.innerHTML = '<p>Error al cargar el horario. Intente de nuevo.</p>';
+            }
+        }
+
+        // ⭐️ MODIFICADO: El modal ahora tiene un modo "create" y "edit"
+        function openAssignModal(mode, data) {
+            assignForm.reset();
+            assignForm.dataset.mode = mode;
+            
+            profesionalSelect.innerHTML = '<option value="">Seleccione un profesional...</option>';
+            profesionalesData.forEach(prof => {
+                const option = new Option(`${prof.nombre} (${prof.especialidad.nombre})`, prof.id);
+                profesionalSelect.appendChild(option);
+            });
+
+            // Lógica para rellenar la hora de fin
+            const fillHoraFin = (startTime) => {
+                horaFinSelect.innerHTML = '';
+                const startIndex = HORAS_OPERACION.indexOf(startTime);
+                for (let i = startIndex + 1; i < HORAS_OPERACION.length; i++) {
+                    const horaFin = HORAS_OPERACION[i];
+                    const option = new Option(horaFin, `${horaFin}:00`);
+                    horaFinSelect.appendChild(option);
+                }
+            };
+            
+            if (mode === 'create') {
+                modalTitle.textContent = 'Asignar Box';
+                submitButton.textContent = 'Guardar Asignación';
+                deleteButton.style.display = 'none';
+                
+                assignForm.dataset.boxId = data.boxId;
+                document.getElementById('modal-box-num').textContent = `Box ${data.boxNum}`;
+                document.getElementById('modal-hora-inicio').textContent = data.hora;
+                fillHoraFin(data.hora);
+                if (horaFinSelect.options.length > 0) horaFinSelect.value = `${HORAS_OPERACION[HORAS_OPERACION.indexOf(data.hora) + 1]}:00`;
+
+            } else if (mode === 'edit') {
+                modalTitle.textContent = 'Editar Asignación';
+                submitButton.textContent = 'Actualizar Asignación';
+                deleteButton.style.display = 'inline-block';
+                
+                assignForm.dataset.assignmentId = data.id;
+                document.getElementById('modal-box-num').textContent = data.box;
+                const horaInicio = data.hora_inicio.substring(0, 5);
+                document.getElementById('modal-hora-inicio').textContent = horaInicio;
+                profesionalSelect.value = data.profesional.id;
+                especialidadDisplay.value = data.profesional.especialidad.nombre;
+                fillHoraFin(horaInicio);
+                horaFinSelect.value = data.hora_fin;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeAssignModal() {
+            modal.style.display = 'none';
+            assignForm.reset();
+        }
+
+        // ⭐️ MODIFICADO: El click ahora detecta celdas disponibles Y ocupadas
+        gridContainer.addEventListener('click', async (event) => {
+            const availableSlot = event.target.closest('.time-slot.disponible');
+            const occupiedSlot = event.target.closest('.time-slot.ocupado');
+
+            if (availableSlot) {
+                const data = {
+                    boxNum: availableSlot.dataset.boxNum,
+                    boxId: availableSlot.dataset.boxId,
+                    hora: availableSlot.dataset.hora
+                };
+                openAssignModal('create', data);
+            } else if (occupiedSlot) {
+                const assignmentId = occupiedSlot.dataset.assignmentId;
+                try {
+                    const response = await fetch(`/api/asignaciones/${assignmentId}/`, { headers: getAuthenticatedHeaders() });
+                    const assignmentData = await response.json();
+                    openAssignModal('edit', assignmentData);
+                } catch (error) {
+                    console.error('Error al obtener datos de la asignación:', error);
+                    alert('No se pudieron cargar los detalles de la cita.');
+                }
+            }
+        });
+
+        closeModalButton.addEventListener('click', closeAssignModal);
+        cancelModalButton.addEventListener('click', closeAssignModal);
+        modal.addEventListener('click', (event) => { if (event.target === modal) closeAssignModal(); });
+        profesionalSelect.addEventListener('change', () => { /* ... sin cambios ... */ });
+        floorFilter.addEventListener('change', () => {
+            const selectedFloor = floorFilter.value;
+            const selectedDate = dateSelector.value; // Lee la fecha ACTUAL del selector de fecha
+            
+            // Solo recargamos si hay una fecha seleccionada (evita errores si está vacío)
+            if (selectedDate) { 
+                fetchAndDisplaySchedule(selectedFloor, selectedDate);
+            }
+        });
+
+        // Listener para el selector de FECHA
+        dateSelector.addEventListener('change', () => {
+            const selectedFloor = floorFilter.value;
+            const selectedDate = dateSelector.value; // Lee la NUEVA fecha que el usuario acaba de elegir
+            
+            if (selectedDate) {
+                fetchAndDisplaySchedule(selectedFloor, selectedDate);
+            }
+        });
+        
+        // ⭐️ MODIFICADO: El formulario ahora envía POST (crear) o PUT (actualizar)
+        assignForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const mode = assignForm.dataset.mode;
+            const selectedDate = dateSelector.value;
+            let url, method;
+
+            const formData = {
+                profesional: profesionalSelect.value,
+                fecha: selectedDate,
+                hora_inicio: document.getElementById('modal-hora-inicio').textContent + ':00',
+                hora_fin: horaFinSelect.value
+            };
+            
+            if (mode === 'create') {
+                url = '/api/asignaciones/';
+                method = 'POST';
+                formData.box = assignForm.dataset.boxId;
+            } else { // modo 'edit'
+                const assignmentId = assignForm.dataset.assignmentId;
+                url = `/api/asignaciones/${assignmentId}/`;
+                method = 'PUT';
+                const boxInfo = document.getElementById('modal-box-num').textContent;
+                const boxObj = boxesData.find(b => boxInfo.startsWith(`Box ${b.numero}`));
+                formData.box = boxObj.id;
+            }
+
+            try {
+                const response = await fetch(url, { method: method, headers: getAuthenticatedHeaders(), body: JSON.stringify(formData) });
+                if (!response.ok) { const errorData = await response.json(); throw new Error(JSON.stringify(errorData)); }
+                closeAssignModal();
+                fetchAndDisplaySchedule(floorFilter.value, selectedDate);
+            } catch (error) {
+                console.error('Error al guardar la asignación:', error);
+                alert(`No se pudo guardar la asignación: ${error.message}`);
+            }
+        });
+        
+        // ⭐️ NUEVO: Event listener para el botón de eliminar
+        deleteButton.addEventListener('click', async () => {
+            const assignmentId = assignForm.dataset.assignmentId;
+            if (confirm('¿Estás seguro de que quieres eliminar esta cita? Esta acción no se puede deshacer.')) {
+                try {
+                    const response = await fetch(`/api/asignaciones/${assignmentId}/`, { method: 'DELETE', headers: getAuthenticatedHeaders() });
+                    if (!response.ok) throw new Error('El servidor rechazó la solicitud de eliminación.');
+                    closeAssignModal();
+                    fetchAndDisplaySchedule(floorFilter.value, dateSelector.value);
+                } catch (error) {
+                    console.error('Error al eliminar:', error);
+                    alert(`No se pudo eliminar la cita: ${error.message}`);
+                }
+            }
+        });
+
+        async function init() {
+            const today = new Date().toISOString().slice(0, 10);
+            dateSelector.value = today;
+            await fetchBoxes();
+            await fetchProfesionales();
+            fetchAndDisplaySchedule(floorFilter.value, dateSelector.value);
+        }
+
+        init();
+    });
+</script>
+</body>
+</html>
