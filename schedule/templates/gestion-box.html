@@ -314,6 +314,7 @@
                 <select id="floor-filter">
                     <option value="4" selected>Piso 4</option>
                     <option value="5">Piso 5</option>
+                    <option value="5">Piso 6</option>
                 </select>
                 <input type="date" id="date-selector" style="padding: 0.65rem; border: 1px solid var(--color-borde); border-radius: 6px; font-size: 1rem;">
                 <button class="save-button">Guardar Cambios</button>
@@ -387,7 +388,6 @@
         const especialidadDisplay = document.getElementById('especialidad-display');
         const horaFinSelect = document.getElementById('hora-fin-select');
         
-        // ⭐️ Se crea dinámicamente el botón de eliminar y se añade al modal
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
         deleteButton.textContent = 'Eliminar Cita';
@@ -407,8 +407,9 @@
             return { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken };
         }
 
+        // --- FUNCIONES DE CARGA DE DATOS ---
         async function fetchBoxes() {
-            try {
+             try {
                 const response = await fetch('/api/boxes/', { headers: getAuthenticatedHeaders() });
                 if (!response.ok) throw new Error('No se pudo autenticar para obtener los boxes.');
                 boxesData = await response.json();
@@ -428,7 +429,19 @@
                 alert('Error al cargar datos iniciales. Por favor, recargue la página.');
             }
         }
+        
+        function populateFloorFilter() {
+            const uniqueFloors = [...new Set(boxesData.map(box => box.piso))];
+            uniqueFloors.sort((a, b) => a - b);
 
+            floorFilter.innerHTML = '';
+            uniqueFloors.forEach(piso => {
+                const option = new Option(`Piso ${piso}`, piso);
+                floorFilter.appendChild(option);
+            });
+        }
+
+        // --- LÓGICA DE LA GRILLA ---
         function renderGrid(piso) {
             gridContainer.innerHTML = '';
             const headerRow = document.createElement('div');
@@ -438,7 +451,11 @@
                 headerRow.innerHTML += `<div class="grid-header-cell">${hora}</div>`;
             });
             gridContainer.appendChild(headerRow);
+            
             const boxesDelPiso = boxesData.filter(box => box.piso == piso);
+
+            boxesDelPiso.sort((a, b) => a.numero - b.numero);
+            
             boxesDelPiso.forEach(box => {
                 const boxRow = document.createElement('div');
                 boxRow.className = 'box-row';
@@ -455,14 +472,14 @@
                 gridContainer.appendChild(boxRow);
             });
         }
-        
-        // ⭐️ MODIFICADO: Ahora guarda el ID de la asignación en la celda
+
         async function fetchAndDisplaySchedule(piso, fecha) {
             renderGrid(piso);
             const url = `/api/asignaciones/?piso=${piso}&fecha=${fecha}`;
             try {
                 const response = await fetch(url, { headers: getAuthenticatedHeaders() });
                 if (!response.ok) throw new Error('No se pudo obtener el horario.');
+                
                 const asignaciones = await response.json();
                 asignaciones.forEach(asignacion => {
                     const horaInicio = asignacion.hora_inicio.substring(0, 5);
@@ -471,7 +488,7 @@
                     if (cell) {
                         cell.classList.remove('disponible');
                         cell.classList.add('ocupado');
-                        cell.dataset.assignmentId = asignacion.id; // <-- Guardamos el ID de la cita
+                        cell.dataset.assignmentId = asignacion.id;
                         cell.innerHTML = `<span class="profesional">${asignacion.profesional.nombre}</span><span class="especialidad">${asignacion.profesional.especialidad.nombre}</span>`;
                     }
                 });
@@ -480,8 +497,7 @@
                 gridContainer.innerHTML = '<p>Error al cargar el horario. Intente de nuevo.</p>';
             }
         }
-
-        // ⭐️ MODIFICADO: El modal ahora tiene un modo "create" y "edit"
+        
         function openAssignModal(mode, data) {
             assignForm.reset();
             assignForm.dataset.mode = mode;
@@ -492,7 +508,6 @@
                 profesionalSelect.appendChild(option);
             });
 
-            // Lógica para rellenar la hora de fin
             const fillHoraFin = (startTime) => {
                 horaFinSelect.innerHTML = '';
                 const startIndex = HORAS_OPERACION.indexOf(startTime);
@@ -537,7 +552,7 @@
             assignForm.reset();
         }
 
-        // ⭐️ MODIFICADO: El click ahora detecta celdas disponibles Y ocupadas
+        // --- EVENT LISTENERS ---
         gridContainer.addEventListener('click', async (event) => {
             const availableSlot = event.target.closest('.time-slot.disponible');
             const occupiedSlot = event.target.closest('.time-slot.ocupado');
@@ -565,28 +580,29 @@
         closeModalButton.addEventListener('click', closeAssignModal);
         cancelModalButton.addEventListener('click', closeAssignModal);
         modal.addEventListener('click', (event) => { if (event.target === modal) closeAssignModal(); });
-        profesionalSelect.addEventListener('change', () => { /* ... sin cambios ... */ });
+        
+        profesionalSelect.addEventListener('change', () => {
+            const selectedId = parseInt(profesionalSelect.value, 10);
+            const profesional = profesionalesData.find(p => p.id === selectedId);
+            especialidadDisplay.value = profesional ? profesional.especialidad.nombre : '';
+        });
+
         floorFilter.addEventListener('change', () => {
             const selectedFloor = floorFilter.value;
-            const selectedDate = dateSelector.value; // Lee la fecha ACTUAL del selector de fecha
-            
-            // Solo recargamos si hay una fecha seleccionada (evita errores si está vacío)
-            if (selectedDate) { 
+            const selectedDate = dateSelector.value;
+            if (selectedDate) {
                 fetchAndDisplaySchedule(selectedFloor, selectedDate);
             }
         });
 
-        // Listener para el selector de FECHA
         dateSelector.addEventListener('change', () => {
             const selectedFloor = floorFilter.value;
-            const selectedDate = dateSelector.value; // Lee la NUEVA fecha que el usuario acaba de elegir
-            
+            const selectedDate = dateSelector.value;
             if (selectedDate) {
                 fetchAndDisplaySchedule(selectedFloor, selectedDate);
             }
         });
         
-        // ⭐️ MODIFICADO: El formulario ahora envía POST (crear) o PUT (actualizar)
         assignForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const mode = assignForm.dataset.mode;
@@ -624,7 +640,6 @@
             }
         });
         
-        // ⭐️ NUEVO: Event listener para el botón de eliminar
         deleteButton.addEventListener('click', async () => {
             const assignmentId = assignForm.dataset.assignmentId;
             if (confirm('¿Estás seguro de que quieres eliminar esta cita? Esta acción no se puede deshacer.')) {
@@ -640,12 +655,19 @@
             }
         });
 
+        // --- CARGA INICIAL (INIT) ---
         async function init() {
             const today = new Date().toISOString().slice(0, 10);
             dateSelector.value = today;
+
             await fetchBoxes();
             await fetchProfesionales();
-            fetchAndDisplaySchedule(floorFilter.value, dateSelector.value);
+            
+            populateFloorFilter();
+            
+            if (floorFilter.value) {
+                fetchAndDisplaySchedule(floorFilter.value, dateSelector.value);
+            }
         }
 
         init();
