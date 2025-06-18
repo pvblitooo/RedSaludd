@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    {% load static %}
     <style>
         :root {
             --color-primario: #00A79D; --color-fondo: #f4f7f9; --color-blanco: #ffffff; --color-texto: #333; --color-borde: #e0e6ed; --color-sombra: rgba(0, 0, 0, 0.05); --color-activo: #28a745; --color-inactivo: #dc3545; --color-azul-stat: #007bff;
@@ -55,18 +56,20 @@
             <select id="filter-specialty">
                 <option value="">Todas las especialidades</option>
             </select>
-            <select id="filter-floor">
-                <option value="">Todos los pisos</option>
-            </select>
         </div>
         <table>
             <thead>
                 <tr>
-                    <th>Nombre</th> <th>RUT</th> <th>Correo</th> <th>Teléfono</th> <th>Piso</th> <th>Agenda Activa</th> <th>Acciones</th>
+                    <th>Nombre</th>
+                    <th>RUT</th>
+                    <th>Correo</th>
+                    <th>Teléfono</th>
+                    <th>Agenda Activa</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="professionals-table-body">
-                <tr><td colspan="7" style="text-align: center;">Cargando...</td></tr>
+                <tr><td colspan="6" style="text-align: center;">Cargando...</td></tr>
             </tbody>
         </table>
     </div>
@@ -81,13 +84,18 @@
                 </div>
         </div>
     </div>
+
+    <div style="display:none;">
+        {% csrf_token %}
+    </div>
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
         // --- SELECTORES ---
         const tableBody = document.getElementById('professionals-table-body');
         const searchInput = document.getElementById('search-name');
         const specialtyFilter = document.getElementById('filter-specialty');
-        const floorFilter = document.getElementById('filter-floor');
+        
+        // Selectores para el modal de detalles
         const detailsModal = document.getElementById('details-modal');
         const closeModalButton = document.getElementById('close-details-modal');
         const modalProfNombre = document.getElementById('modal-prof-nombre');
@@ -95,20 +103,29 @@
 
         // --- FUNCIONES ---
 
-        // Para peticiones GET, la cookie de sesión de Django es suficiente para la autenticación.
         function getHeaders() {
-            return { 'Content-Type': 'application/json' };
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            return {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            };
         }
 
-        // Función principal para cargar la tabla de profesionales con los filtros aplicados
         async function fetchAndDisplayProfessionals() {
+            let url = '/api/profesionales/';
             const params = new URLSearchParams();
-            if (searchInput.value) params.append('search', searchInput.value);
-            if (specialtyFilter.value) params.append('especialidad', specialtyFilter.value);
-            if (floorFilter.value) params.append('piso', floorFilter.value);
+            const searchValue = searchInput.value;
+            const specialtyValue = specialtyFilter.value;
+
+            if (searchValue) params.append('search', searchValue);
+            if (specialtyValue) params.append('especialidad', specialtyValue);
+
+            const queryString = params.toString();
+            if (queryString) {
+                url += `?${queryString}`;
+            }
             
-            const url = `/api/profesionales/?${params.toString()}`;
-            tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Cargando...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Cargando...</td></tr>';
 
             try {
                 const response = await fetch(url, { headers: getHeaders() });
@@ -117,7 +134,7 @@
                 
                 tableBody.innerHTML = '';
                 if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No se encontraron profesionales con los filtros seleccionados.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No se encontraron profesionales.</td></tr>';
                     return;
                 }
                 
@@ -125,21 +142,23 @@
                     const statusPill = profesional.agenda_activa ? '<span class="status-pill status-active">Sí</span>' : '<span class="status-pill status-inactive">No</span>';
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${profesional.nombre}</td> <td>${profesional.rut}</td> <td>${profesional.correo}</td> <td>${profesional.telefono}</td> <td>${profesional.piso || 'N/A'}</td> <td>${statusPill}</td>
+                        <td>${profesional.nombre}</td>
+                        <td>${profesional.rut}</td>
+                        <td>${profesional.correo}</td>
+                        <td>${profesional.telefono}</td>
+                        <td>${statusPill}</td>
                         <td><button class="action-button view-details-btn" data-id="${profesional.id}">Ver Detalles</button></td>
                     `;
                     tableBody.appendChild(row);
                 });
             } catch (error) {
                 console.error(error);
-                tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center;">Error al cargar los datos: ${error.message}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">Error al cargar los datos: ${error.message}</td></tr>`;
             }
         }
 
-        // Función para llenar los menús desplegables de los filtros
         async function populateFilters() {
             try {
-                // Llenar especialidades
                 const specialtyResponse = await fetch('/api/especialidades/', { headers: getHeaders() });
                 if (!specialtyResponse.ok) throw new Error('Error al cargar especialidades');
                 const specialties = await specialtyResponse.json();
@@ -147,24 +166,11 @@
                     const option = new Option(specialty.nombre, specialty.id);
                     specialtyFilter.appendChild(option);
                 });
-
-                // Llenar pisos
-                const boxesResponse = await fetch('/api/boxes/', { headers: getHeaders() });
-                if (!boxesResponse.ok) throw new Error('Error al cargar pisos');
-                const boxes = await boxesResponse.json();
-                const uniqueFloors = [...new Set(boxes.map(box => box.piso))];
-                uniqueFloors.sort((a, b) => a - b);
-                uniqueFloors.forEach(floor => {
-                    const option = new Option(`Piso ${floor}`, floor);
-                    floorFilter.appendChild(option);
-                });
             } catch (error) {
                 console.error("Error al poblar los filtros:", error);
-                // Puedes mostrar un mensaje al usuario si lo deseas
             }
         }
 
-        // Funciones para el modal de detalles
         function openDetailsModal(profesional) {
             modalProfNombre.textContent = profesional.nombre;
             modalBodyContent.innerHTML = `
@@ -172,7 +178,6 @@
                 <div class="detail-item"><strong>RUT:</strong> ${profesional.rut}</div>
                 <div class="detail-item"><strong>Correo:</strong> ${profesional.correo}</div>
                 <div class="detail-item"><strong>Teléfono:</strong> ${profesional.telefono}</div>
-                <div class="detail-item"><strong>Piso Asignado:</strong> ${profesional.piso || 'N/A'}</div>
                 <div class="detail-item"><strong>Agenda Activa:</strong> ${profesional.agenda_activa ? 'Sí' : 'No'}</div>
             `;
             detailsModal.style.display = 'flex';
@@ -183,26 +188,33 @@
         }
 
         // --- EVENT LISTENERS ---
+        // Listeners para los filtros
         searchInput.addEventListener('input', fetchAndDisplayProfessionals);
         specialtyFilter.addEventListener('change', fetchAndDisplayProfessionals);
-        // 👇 AQUÍ ESTABA EL ERROR CORREGIDO 👇
-        floorFilter.addEventListener('change', fetchAndDisplayProfessionals); 
-
+        
+        // Listeners para cerrar el modal
         closeModalButton.addEventListener('click', closeDetailsModal);
         detailsModal.addEventListener('click', (event) => {
             if (event.target === detailsModal) closeDetailsModal();
         });
 
+        // ⭐️ LISTENER CORREGIDO Y ASEGURADO PARA LOS BOTONES "VER DETALLES" ⭐️
         tableBody.addEventListener('click', async (event) => {
+            // Se activa solo si el elemento clickeado tiene la clase 'view-details-btn'
             if (event.target.classList.contains('view-details-btn')) {
                 const profesionalId = event.target.dataset.id;
-                modalBodyContent.innerHTML = '<p>Cargando detalles...</p>';
+                
+                // Muestra el modal con un mensaje de carga
+                modalProfNombre.textContent = 'Cargando...';
+                modalBodyContent.innerHTML = '';
                 detailsModal.style.display = 'flex';
+
                 try {
                     const response = await fetch(`/api/profesionales/${profesionalId}/`, { headers: getHeaders() });
                     if (!response.ok) throw new Error('No se pudo cargar la información del profesional.');
+                    
                     const profesionalData = await response.json();
-                    openDetailsModal(profesionalData);
+                    openDetailsModal(profesionalData); // Llama a la función que llena y muestra el modal
                 } catch (error) {
                     console.error(error);
                     modalBodyContent.innerHTML = `<p style="color: red;">${error.message}</p>`;

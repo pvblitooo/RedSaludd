@@ -7,6 +7,7 @@ from .models import Profesional, Asignacion, Box, Especialidad
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+from django.middleware.csrf import get_token
 import datetime
 from .serializers import (
     ProfesionalSerializer, 
@@ -26,8 +27,14 @@ class BoxViewSet(viewsets.ModelViewSet):
     serializer_class = BoxSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+@login_required
 def professionals_page(request):
-    return render(request, 'professionals.html')
+    # Generamos el token CSRF para pasárselo al template
+    csrf_token = get_token(request)
+    context = {
+        'csrf_token_value': csrf_token
+    }
+    return render(request, 'schedule/professionals.html', context)
 
 def gestion_box_page(request):
     # Por ahora solo renderiza el template. Podríamos pasarle datos en el futuro.
@@ -35,14 +42,19 @@ def gestion_box_page(request):
 
 # Esta vista manejará automáticamente las acciones GET, POST, PUT, DELETE
 class ProfesionalViewSet(viewsets.ModelViewSet):
-    queryset = Profesional.objects.all()
+    queryset = Profesional.objects.all().order_by('nombre') # Añadimos un orden por defecto
     serializer_class = ProfesionalSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    # --- ASEGÚRATE DE QUE ESTA SECCIÓN ESTÉ ASÍ ---
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['piso', 'especialidad'] # Para los desplegables de piso y especialidad
-    search_fields = ['nombre'] # Para el buscador de texto por nombre
-
+    
+    # Solo filtramos por 'especialidad'. 'piso' ha sido eliminado.
+    filterset_fields = ['especialidad'] 
+    
+    # Solo buscamos por 'nombre'.
+    search_fields = ['nombre']
+    # ---------------------------------------------
 class AsignacionViewSet(viewsets.ModelViewSet):
     # Ya no definimos un serializer_class aquí...
 

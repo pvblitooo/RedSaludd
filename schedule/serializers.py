@@ -7,13 +7,13 @@ class EspecialidadSerializer(serializers.ModelSerializer):
         fields = ['id', 'nombre']
 
 class ProfesionalSerializer(serializers.ModelSerializer):
-    # Para mostrar el nombre de la especialidad en lugar de solo su ID
     especialidad = EspecialidadSerializer(read_only=True)
 
     class Meta:
         model = Profesional
-        fields = ['id', 'nombre', 'rut', 'correo', 'telefono', 'piso', 'agenda_activa', 'especialidad']
-
+        # ⭐️ CAMBIO: Hemos eliminado 'piso' de esta lista ⭐️
+        fields = ['id', 'nombre', 'rut', 'correo', 'telefono', 'agenda_activa', 'especialidad']
+        
 class AsignacionReadSerializer(serializers.ModelSerializer):
     profesional = ProfesionalSerializer(read_only=True)
     box = serializers.StringRelatedField(read_only=True) # Muestra "Box 401 - Piso 4"

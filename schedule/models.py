@@ -9,7 +9,6 @@ class Profesional(models.Model):
     rut = models.CharField(max_length=12, unique=True)
     correo = models.EmailField(unique=True)
     telefono = models.CharField(max_length=15)
-    piso = models.IntegerField(null=True, blank=True)
     especialidad = models.ForeignKey(Especialidad, on_delete=models.SET_NULL, null=True, blank=True)
     agenda_activa = models.BooleanField(default=True)
     def __str__(self): return self.nombre
