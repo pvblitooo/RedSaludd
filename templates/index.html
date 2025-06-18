@@ -18,6 +18,28 @@
             --color-sombra: rgba(0, 0, 0, 0.05);
             --color-azul-stat: #007bff;
         }
+        .logout-button-styled {
+    background-color: #E94E77; /* Color rojo/rosado similar al de la imagen */
+    color: white;
+    border: none;
+    border-radius: 50px; /* Esquinas totalmente redondeadas para la forma de píldora */
+    padding: 10px 20px; /* Relleno para darle cuerpo */
+    font-family: 'Roboto', sans-serif; /* Mantenemos la fuente */
+    font-size: 1rem;
+    font-weight: 700; /* Texto en negrita */
+    cursor: pointer;
+    
+    /* Flexbox para alinear el texto y el ícono */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* Espacio entre el texto y el ícono */
+
+    /* Transición suave para el efecto hover */
+    transition: background-color 0.2s ease-in-out;
+}
+
+
+        .logout-button-styled:hover {background-color: #D93A54; /* Un tono ligeramente más oscuro */}
         body { font-family: 'Roboto', sans-serif; background-color: var(--color-fondo); color: var(--color-texto); margin: 0; }
         .main-container { padding: 2rem; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -50,7 +72,7 @@
     <div class="header-right">
         <form method="post" action="{% url 'logout' %}" class="logout-form">
             {% csrf_token %}
-            <button type="submit" class="logout-button">Cerrar Sesión</button>
+            <button type="submit" class="logout-button-styled">Cerrar Sesión</button>
         </form>
     </div>
 </header>

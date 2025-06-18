@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions
 from django.utils import timezone
+from django.db.models import Q
 from rest_framework.decorators import api_view, permission_classes 
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
@@ -94,30 +95,37 @@ def professionals_page(request):
 def gestion_box_page(request):
     return render(request, 'gestion-box.html')
 
-# --- AÑADE ESTA NUEVA VISTA AL FINAL DEL ARCHIVO ---
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def dashboard_stats_view(request):
     """
-    Calcula y devuelve estadísticas clave y las próximas citas para el dashboard.
+    Calcula estadísticas y devuelve las próximas citas dentro de un rango
+    de los próximos 2 días.
     """
-    now = timezone.now()
+    now = timezone.localtime()
     today = now.date()
     current_time = now.time()
 
-    # 1. Total de citas para hoy
+    # Calculamos la fecha límite (hoy + 2 días)
+    fecha_limite = today + datetime.timedelta(days=2)
+
+    # --- INICIO DE LA NUEVA LÓGICA DE CONSULTA ---
+    
+    # 1. Total de citas para hoy (esto no cambia)
     citas_hoy_count = Asignacion.objects.filter(fecha=today).count()
 
-    # 2. Total de profesionales únicos con citas hoy
+    # 2. Total de profesionales únicos con citas hoy (esto no cambia)
     profesionales_activos_count = Asignacion.objects.filter(fecha=today).values('profesional').distinct().count()
 
-    # 3. Las próximas 5 citas desde la hora actual
+    # 3. Próximas citas dentro de los próximos 2 días
     proximas_citas_qs = Asignacion.objects.filter(
-        fecha=today,
-        hora_inicio__gte=current_time
-    ).order_by('hora_inicio')[:5]
-    
-    # Serializamos los datos de las próximas citas para que se vean bien en JSON
+        # CONDICIÓN A: Citas para HOY, pero solo desde la hora actual en adelante
+        Q(fecha=today, hora_inicio__gte=current_time) |
+        
+        # O... CONDICIÓN B: Citas para los próximos 2 días (mañana y pasado mañana)
+        Q(fecha__gt=today, fecha__lte=fecha_limite)
+    ).order_by('fecha', 'hora_inicio')[:5] # Ordenamos y tomamos las 5 primeras
+
     proximas_citas_serializer = AsignacionReadSerializer(proximas_citas_qs, many=True)
 
     data = {

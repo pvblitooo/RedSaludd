@@ -303,6 +303,26 @@
             color: var(--color-blanco);
             border-color: var(--color-primario);
         }
+        .logout-button-styled {
+            background-color: #E94E77; /* Color rojo/rosado similar al de la imagen */
+            color: white;
+            border: none;
+            border-radius: 50px; /* Esquinas totalmente redondeadas para la forma de píldora */
+            padding: 10px 20px; /* Relleno para darle cuerpo */
+            font-family: 'Roboto', sans-serif; /* Mantenemos la fuente */
+            font-size: 1rem;
+            font-weight: 700; /* Texto en negrita */
+            cursor: pointer;
+    
+    
+            display: inline-flex;
+            align-items: center;
+            gap: 8px; 
+            transition: background-color 0.2s ease-in-out;
+        }
+
+
+        .logout-button-styled:hover {background-color: #D93A54; /* Un tono ligeramente más oscuro */}
     </style>
 </head>
 <body>
@@ -314,15 +334,14 @@
                 <select id="floor-filter">
                     <option value="4" selected>Piso 4</option>
                     <option value="5">Piso 5</option>
-                    <option value="5">Piso 6</option>
+                    <option value="6">Piso 6</option>
+                    <option value="7">Piso 7</option>
                 </select>
                 <input type="date" id="date-selector" style="padding: 0.65rem; border: 1px solid var(--color-borde); border-radius: 6px; font-size: 1rem;">
                 <button class="save-button">Guardar Cambios</button>
                 <form method="post" action="{% url 'logout' %}" style="margin: 0; padding: 0; display: inline;">
                         {% csrf_token %}
-                <button type="submit" style="background:none; border:none; color:#007bff; cursor:pointer; font-size: 1rem; margin-left: 1rem; padding: 0;">
-        Cerrar Sesión
-    </button>
+                <button type="submit" class="logout-button-styled">Cerrar Sesión</button>
 </form>
             </div>
         </div>
