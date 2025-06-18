@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Profesionales - RedSalud</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primario: #00A79D; --color-fondo: #f4f7f9; --color-blanco: #ffffff; --color-texto: #333; --color-borde: #e0e6ed; --color-sombra: rgba(0, 0, 0, 0.05); --color-activo: #28a745; --color-inactivo: #dc3545; --color-azul-stat: #007bff;
+        }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--color-fondo); color: var(--color-texto); margin: 0; padding: 2rem; }
+        .container { max-width: 1200px; margin: auto; background-color: var(--color-blanco); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px var(--color-sombra); }
+        h1 { font-weight: 700; color: var(--color-texto); }
+        .main-nav { display: flex; gap: 0.5rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-borde); }
+        .nav-button { text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 500; color: var(--color-primario); background-color: transparent; border: 1px solid transparent; transition: all 0.2s ease-in-out; }
+        .nav-button:hover { border-color: var(--color-primario); background-color: #e6f6f5; }
+        .nav-button.active { background-color: var(--color-primario); color: var(--color-blanco); border-color: var(--color-primario); }
+        .filtros-container { display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center; }
+        .filtros-container input, .filtros-container select { padding: 0.75rem; border: 1px solid var(--color-borde); border-radius: 6px; font-size: 1rem; flex-grow: 1; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--color-borde); }
+        thead { background-color: var(--color-fondo); }
+        th { font-weight: 500; text-transform: uppercase; font-size: 0.85rem; color: #666; }
+        tbody tr:hover { background-color: #f9fafb; }
+        .status-pill { padding: 0.25rem 0.75rem; border-radius: 12px; color: var(--color-blanco); font-weight: 500; font-size: 0.8rem; display: inline-block; }
+        .status-active { background-color: var(--color-activo); }
+        .status-inactive { background-color: var(--color-inactivo); }
+        .action-button { display: inline-block; padding: 0.5rem 1rem; background-color: #fff; color: var(--color-primario); border: 1px solid var(--color-primario); border-radius: 6px; text-decoration: none; font-weight: 500; transition: all 0.2s ease-in-out; cursor: pointer; font-family: 'Roboto', sans-serif; font-size: 1rem; }
+        .action-button:hover { background-color: var(--color-primario); color: var(--color-blanco); }
+
+        /* --- ESTILOS PARA EL MODAL DE DETALLES --- */
+        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 500px; text-align: left; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-borde); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .modal-header h2 { margin: 0; }
+        .close-button { background: none; border: none; font-size: 2rem; cursor: pointer; color: #888; }
+        .detail-item { margin-bottom: 0.75rem; }
+        .detail-item strong { color: var(--color-texto); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Profesionales - Red Salud</h1>
+        <nav class="main-nav">
+            <a href="{% url 'homepage' %}" class="nav-button">Inicio</a>
+            <a href="{% url 'gestion-box-page' %}" class="nav-button">Gestión de Box</a>
+            <a href="{% url 'agenda-semanal-page' %}" class="nav-button">Agenda Semanal</a>
+            <a href="{% url 'professionals-page' %}" class="nav-button active">Profesionales</a>
+        </nav>
+        <div class="filtros-container">
+            <input type="text" id="search-name" placeholder="Buscar por nombre...">
+            <select id="filter-specialty">
+                <option value="">Todas las especialidades</option>
+            </select>
+            <select id="filter-floor">
+                <option value="">Todos los pisos</option>
+            </select>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th> <th>RUT</th> <th>Correo</th> <th>Teléfono</th> <th>Piso</th> <th>Agenda Activa</th> <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="professionals-table-body">
+                <tr><td colspan="7" style="text-align: center;">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="details-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-prof-nombre">Detalles del Profesional</h2>
+                <button id="close-details-modal" class="close-button">&times;</button>
+            </div>
+            <div id="modal-body-content">
+                </div>
+        </div>
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // --- SELECTORES ---
+        const tableBody = document.getElementById('professionals-table-body');
+        const searchInput = document.getElementById('search-name');
+        const specialtyFilter = document.getElementById('filter-specialty');
+        const floorFilter = document.getElementById('filter-floor');
+        const detailsModal = document.getElementById('details-modal');
+        const closeModalButton = document.getElementById('close-details-modal');
+        const modalProfNombre = document.getElementById('modal-prof-nombre');
+        const modalBodyContent = document.getElementById('modal-body-content');
+
+        // --- FUNCIONES ---
+
+        // Para peticiones GET, la cookie de sesión de Django es suficiente para la autenticación.
+        function getHeaders() {
+            return { 'Content-Type': 'application/json' };
+        }
+
+        // Función principal para cargar la tabla de profesionales con los filtros aplicados
+        async function fetchAndDisplayProfessionals() {
+            const params = new URLSearchParams();
+            if (searchInput.value) params.append('search', searchInput.value);
+            if (specialtyFilter.value) params.append('especialidad', specialtyFilter.value);
+            if (floorFilter.value) params.append('piso', floorFilter.value);
+            
+            const url = `/api/profesionales/?${params.toString()}`;
+            tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Cargando...</td></tr>';
+
+            try {
+                const response = await fetch(url, { headers: getHeaders() });
+                if (!response.ok) throw new Error('No se pudo cargar la lista de profesionales.');
+                const data = await response.json();
+                
+                tableBody.innerHTML = '';
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No se encontraron profesionales con los filtros seleccionados.</td></tr>';
+                    return;
+                }
+                
+                data.forEach(profesional => {
+                    const statusPill = profesional.agenda_activa ? '<span class="status-pill status-active">Sí</span>' : '<span class="status-pill status-inactive">No</span>';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${profesional.nombre}</td> <td>${profesional.rut}</td> <td>${profesional.correo}</td> <td>${profesional.telefono}</td> <td>${profesional.piso || 'N/A'}</td> <td>${statusPill}</td>
+                        <td><button class="action-button view-details-btn" data-id="${profesional.id}">Ver Detalles</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error(error);
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center;">Error al cargar los datos: ${error.message}</td></tr>`;
+            }
+        }
+
+        // Función para llenar los menús desplegables de los filtros
+        async function populateFilters() {
+            try {
+                // Llenar especialidades
+                const specialtyResponse = await fetch('/api/especialidades/', { headers: getHeaders() });
+                if (!specialtyResponse.ok) throw new Error('Error al cargar especialidades');
+                const specialties = await specialtyResponse.json();
+                specialties.forEach(specialty => {
+                    const option = new Option(specialty.nombre, specialty.id);
+                    specialtyFilter.appendChild(option);
+                });
+
+                // Llenar pisos
+                const boxesResponse = await fetch('/api/boxes/', { headers: getHeaders() });
+                if (!boxesResponse.ok) throw new Error('Error al cargar pisos');
+                const boxes = await boxesResponse.json();
+                const uniqueFloors = [...new Set(boxes.map(box => box.piso))];
+                uniqueFloors.sort((a, b) => a - b);
+                uniqueFloors.forEach(floor => {
+                    const option = new Option(`Piso ${floor}`, floor);
+                    floorFilter.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al poblar los filtros:", error);
+                // Puedes mostrar un mensaje al usuario si lo deseas
+            }
+        }
+
+        // Funciones para el modal de detalles
+        function openDetailsModal(profesional) {
+            modalProfNombre.textContent = profesional.nombre;
+            modalBodyContent.innerHTML = `
+                <div class="detail-item"><strong>Especialidad:</strong> ${profesional.especialidad ? profesional.especialidad.nombre : 'N/A'}</div><hr>
+                <div class="detail-item"><strong>RUT:</strong> ${profesional.rut}</div>
+                <div class="detail-item"><strong>Correo:</strong> ${profesional.correo}</div>
+                <div class="detail-item"><strong>Teléfono:</strong> ${profesional.telefono}</div>
+                <div class="detail-item"><strong>Piso Asignado:</strong> ${profesional.piso || 'N/A'}</div>
+                <div class="detail-item"><strong>Agenda Activa:</strong> ${profesional.agenda_activa ? 'Sí' : 'No'}</div>
+            `;
+            detailsModal.style.display = 'flex';
+        }
+
+        function closeDetailsModal() {
+            detailsModal.style.display = 'none';
+        }
+
+        // --- EVENT LISTENERS ---
+        searchInput.addEventListener('input', fetchAndDisplayProfessionals);
+        specialtyFilter.addEventListener('change', fetchAndDisplayProfessionals);
+        // 👇 AQUÍ ESTABA EL ERROR CORREGIDO 👇
+        floorFilter.addEventListener('change', fetchAndDisplayProfessionals); 
+
+        closeModalButton.addEventListener('click', closeDetailsModal);
+        detailsModal.addEventListener('click', (event) => {
+            if (event.target === detailsModal) closeDetailsModal();
+        });
+
+        tableBody.addEventListener('click', async (event) => {
+            if (event.target.classList.contains('view-details-btn')) {
+                const profesionalId = event.target.dataset.id;
+                modalBodyContent.innerHTML = '<p>Cargando detalles...</p>';
+                detailsModal.style.display = 'flex';
+                try {
+                    const response = await fetch(`/api/profesionales/${profesionalId}/`, { headers: getHeaders() });
+                    if (!response.ok) throw new Error('No se pudo cargar la información del profesional.');
+                    const profesionalData = await response.json();
+                    openDetailsModal(profesionalData);
+                } catch (error) {
+                    console.error(error);
+                    modalBodyContent.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                }
+            }
+        });
+
+        // --- CARGA INICIAL ---
+        async function init() {
+            await populateFilters();
+            await fetchAndDisplayProfessionals();
+        }
+
+        init();
+    });
+</script>
+</body>
+</html>

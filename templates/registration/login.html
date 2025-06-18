@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -35,6 +36,9 @@
 </head>
 <body>
     <div class="login-form-container">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <img src="{% static 'logo.png' %}" alt="Logo de RedSalud" style="max-width: 150px; height: auto;">
+        </div>
         <h1>Ingresar</h1>
         <p>Inicia sesión con tus credenciales</p>
 

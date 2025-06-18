@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agenda Semanal - RedSalud</title>
+    <style>
+        :root {
+            --color-primario: #00A79D; --color-fondo: #f4f7f9; --color-blanco: #ffffff; --color-texto: #333; --color-borde: #e0e6ed; --color-sombra: rgba(0, 0, 0, 0.05); --color-activo: #28a745; --color-inactivo: #dc3545; --color-azul-stat: #007bff;
+        }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--color-fondo); color: var(--color-texto); margin: 0; padding: 2rem; }
+        .container { max-width: 1200px; margin: auto; background-color: var(--color-blanco); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px var(--color-sombra); }
+        h1 { font-weight: 700; color: var(--color-texto); }
+        .main-nav { display: flex; gap: 0.5rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-borde); }
+        .nav-button { text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 500; color: var(--color-primario); background-color: transparent; border: 1px solid transparent; transition: all 0.2s ease-in-out; }
+        .nav-button:hover { border-color: var(--color-primario); background-color: #e6f6f5; }
+        .nav-button.active { background-color: var(--color-primario); color: var(--color-blanco); border-color: var(--color-primario); }
+        .filtros-container { display: flex; gap: 1rem; margin-bottom: 2rem; align-items: center; }
+        .filtros-container input, .filtros-container select { padding: 0.75rem; border: 1px solid var(--color-borde); border-radius: 6px; font-size: 1rem; flex-grow: 1; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--color-borde); }
+        thead { background-color: var(--color-fondo); }
+        th { font-weight: 500; text-transform: uppercase; font-size: 0.85rem; color: #666; }
+        tbody tr:hover { background-color: #f9fafb; }
+        /* Estilos específicos para la grilla semanal */
+        .controls-semanal { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .professional-selector { padding: 0.75rem; border: 1px solid var(--color-borde); border-radius: 6px; font-size: 1rem; min-width: 300px; }
+        .weekly-grid-container { display: grid; grid-template-columns: 80px repeat(6, 1fr); border: 1px solid var(--color-borde); border-radius: 6px; overflow: hidden; }
+        .grid-cell { padding: 0.5rem; border-right: 1px solid var(--color-borde); border-bottom: 1px solid var(--color-borde); min-height: 50px; }
+        .grid-cell:last-child { border-right: none; }
+        .day-header { text-align: center; font-weight: 700; background-color: #f9fafb; }
+        .time-label { font-weight: 500; text-align: right; background-color: #f9fafb; }
+        .appointment-block { background-color: #bee5eb; border-left: 4px solid #007bff; border-radius: 4px; padding: 0.5rem; font-size: 0.8rem; }
+        .appointment-block strong { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header"><h1>Agenda Semanal - Red Salud</h1></header>
+        <nav class="main-nav">
+             <a href="{% url 'homepage' %}" class="nav-button">Inicio</a>
+             <a href="{% url 'gestion-box-page' %}" class="nav-button">Gestión de Box</a>
+             <a href="{% url 'agenda-semanal-page' %}" class="nav-button active">Agenda Semanal</a>
+             <a href="{% url 'professionals-page' %}" class="nav-button">Profesionales</a>
+        </nav>
+
+        <div class="controls-semanal">
+            <p id="showing-for-text">Seleccione un profesional para ver su agenda.</p>
+            <select id="professional-selector" class="professional-selector">
+                <option value="">Cargando profesionales...</option>
+            </select>
+        </div>
+
+        <div id="weekly-grid-container" class="weekly-grid-container">
+            </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const professionalSelector = document.getElementById('professional-selector');
+    const gridContainer = document.getElementById('weekly-grid-container');
+    const showingForText = document.getElementById('showing-for-text');
+    const HORAS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
+    const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+    function getHeaders() { return { 'Content-Type': 'application/json' }; }
+
+    function renderEmptyGrid() {
+        gridContainer.innerHTML = '';
+        // Fila de cabecera (días)
+        gridContainer.innerHTML += '<div class="grid-cell time-label"></div>'; // Esquina vacía
+        DIAS.forEach(dia => {
+            gridContainer.innerHTML += `<div class="grid-cell day-header">${dia}</div>`;
+        });
+
+        // Filas de horas
+        HORAS.forEach(hora => {
+            gridContainer.innerHTML += `<div class="grid-cell time-label">${hora}</div>`; // Etiqueta de hora
+            DIAS.forEach((dia, index) => {
+                // Celda de la grilla con id único: "celda-dia-hora"
+                gridContainer.innerHTML += `<div class="grid-cell" id="cell-${index}-${hora.substring(0,2)}"></div>`;
+            });
+        });
+    }
+
+    async function fetchAndDisplayWeeklySchedule(profesionalId) {
+        if (!profesionalId) return;
+
+        renderEmptyGrid(); // Dibuja la grilla vacía
+        const selectedOption = professionalSelector.options[professionalSelector.selectedIndex];
+        showingForText.innerHTML = `Mostrando agenda para: <strong>${selectedOption.text}</strong>`;
+
+        try {
+            const url = `/api/agenda-semanal/?profesional_id=${profesionalId}`;
+            const response = await fetch(url, { headers: getHeaders() });
+            const asignaciones = await response.json();
+
+            asignaciones.forEach(cita => {
+                const fecha = new Date(cita.fecha + 'T00:00:00'); // Ajuste para que el día sea correcto
+                const diaIndex = fecha.getDay() - 1; // 0=Domingo, 1=Lunes... por eso restamos 1
+                const hora = cita.hora_inicio.substring(0, 2);
+                
+                if (diaIndex >= 0 && diaIndex < 6) { // Solo para Lunes a Sábado
+                    const cellId = `cell-${diaIndex}-${hora}`;
+                    const cell = document.getElementById(cellId);
+                    if (cell) {
+                        cell.innerHTML += `
+                            <div class="appointment-block">
+                                <strong>${cita.profesional.especialidad.nombre}</strong>
+                                <span>${cita.box}</span>
+                            </div>
+                        `;
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Error cargando la agenda semanal:", error);
+        }
+    }
+
+    async function init() {
+        try {
+            const response = await fetch('/api/profesionales/', { headers: getHeaders() });
+            const profesionales = await response.json();
+            
+            professionalSelector.innerHTML = '<option value="">-- Seleccione un profesional --</option>';
+            profesionales.forEach(prof => {
+                const optionText = `${prof.nombre} - ${prof.especialidad.nombre}`;
+                const option = new Option(optionText, prof.id);
+                professionalSelector.appendChild(option);
+            });
+
+            // Listener para cuando se cambia de profesional
+            professionalSelector.addEventListener('change', () => {
+                fetchAndDisplayWeeklySchedule(professionalSelector.value);
+            });
+
+            renderEmptyGrid(); // Muestra la grilla vacía al inicio
+
+        } catch (error) {
+            console.error("Error al cargar la lista de profesionales:", error);
+            professionalSelector.innerHTML = '<option value="">Error al cargar</option>';
+        }
+    }
+
+    init();
+});
+</script>
+</body>
+</html>

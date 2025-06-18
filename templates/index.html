@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -43,16 +44,21 @@
 <body>
     <div class="main-container">
         <header class="header">
-            <h1>Dashboard</h1>
-            <form method="post" action="{% url 'logout' %}" class="logout-form">
-                {% csrf_token %}
-                <button type="submit" class="logout-button">Cerrar Sesión</button>
-            </form>
-        </header>
+    <div class="header-left">
+        <img src="{% static 'logo.png' %}" alt="Logo de RedSalud" class="header-logo">
+        </div>
+    <div class="header-right">
+        <form method="post" action="{% url 'logout' %}" class="logout-form">
+            {% csrf_token %}
+            <button type="submit" class="logout-button">Cerrar Sesión</button>
+        </form>
+    </div>
+</header>
 
         <nav class="main-nav">
             <a href="{% url 'homepage' %}" class="nav-button active">Inicio</a>
             <a href="{% url 'gestion-box-page' %}" class="nav-button">Gestión de Box</a>
+            <a href="{% url 'agenda-semanal-page' %}" class="nav-button">Agenda Semanal</a>
             <a href="{% url 'professionals-page' %}" class="nav-button">Profesionales</a>
         </nav>
         

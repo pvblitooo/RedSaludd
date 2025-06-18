@@ -32,3 +32,8 @@ class BoxSerializer(serializers.ModelSerializer):
     class Meta:
         model = Box
         fields = ['id', 'numero', 'piso']
+
+class EspecialidadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Especialidad
+        fields = ['id', 'nombre']

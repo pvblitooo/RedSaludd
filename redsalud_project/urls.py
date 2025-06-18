@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from schedule import views as schedule_views 
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', schedule_views.homepage_view, name='homepage'),
@@ -24,5 +26,9 @@ urlpatterns = [
     path('api/', include('schedule.urls')),
     path('profesionales/', schedule_views.professionals_page, name='professionals-page'),
     path('gestion-box/', schedule_views.gestion_box_page, name='gestion-box-page'),
+    path('agenda-semanal/', schedule_views.agenda_semanal_page, name='agenda-semanal-page'),
     path('accounts/', include('django.contrib.auth.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / "static")

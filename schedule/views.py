@@ -3,14 +3,23 @@ from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes 
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
-from .models import Profesional, Asignacion, Box
+from .models import Profesional, Asignacion, Box, Especialidad
 from django.shortcuts import render
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+import datetime
 from .serializers import (
     ProfesionalSerializer, 
     AsignacionReadSerializer, 
     AsignacionWriteSerializer,
-    BoxSerializer 
+    BoxSerializer,
+    EspecialidadSerializer 
 )
+
+class EspecialidadViewSet(viewsets.ModelViewSet):
+    queryset = Especialidad.objects.all().order_by('nombre')
+    serializer_class = EspecialidadSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 class BoxViewSet(viewsets.ModelViewSet):
     queryset = Box.objects.all()
@@ -29,6 +38,10 @@ class ProfesionalViewSet(viewsets.ModelViewSet):
     queryset = Profesional.objects.all()
     serializer_class = ProfesionalSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['piso', 'especialidad'] # Para los desplegables de piso y especialidad
+    search_fields = ['nombre'] # Para el buscador de texto por nombre
 
 class AsignacionViewSet(viewsets.ModelViewSet):
     # Ya no definimos un serializer_class aquí...
@@ -106,3 +119,52 @@ def dashboard_stats_view(request):
 @login_required
 def homepage_view(request):
     return render(request, 'index.html')
+
+@login_required
+def professional_detail_page(request, pk):
+    try:
+        profesional = Profesional.objects.get(pk=pk)
+        # Aquí podríamos añadir más contexto, como las próximas citas de este profesional
+        context = {
+            'profesional': profesional
+        }
+        return render(request, 'schedule/professional_detail.html', context)
+    except Profesional.DoesNotExist:
+        # Manejar el caso de que no se encuentre el profesional
+        from django.http import Http404
+        raise Http404("Profesional no encontrado")
+
+@login_required
+def professionals_page(request):
+    # Ahora renderiza desde la sub-carpeta para ser consistentes
+    return render(request, 'schedule/professionals.html') 
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def agenda_semanal_view(request):
+    """
+    Devuelve todas las asignaciones de un profesional para la semana actual.
+    Espera un parámetro 'profesional_id' en la URL.
+    """
+    profesional_id = request.query_params.get('profesional_id')
+    if not profesional_id:
+        from rest_framework import status
+        return Response({'error': 'profesional_id es requerido'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Calculamos el inicio y fin de la semana actual (Lunes a Domingo)
+    today = datetime.date.today()
+    start_of_week = today - datetime.timedelta(days=today.weekday())
+    end_of_week = start_of_week + datetime.timedelta(days=6)
+
+    # Filtramos las asignaciones
+    queryset = Asignacion.objects.filter(
+        profesional_id=profesional_id,
+        fecha__range=[start_of_week, end_of_week]
+    ).order_by('fecha', 'hora_inicio')
+
+    serializer = AsignacionReadSerializer(queryset, many=True)
+    return Response(serializer.data)
+
+@login_required
+def agenda_semanal_page(request):
+    return render(request, 'schedule/agenda_semanal.html')
