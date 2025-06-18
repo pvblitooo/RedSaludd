@@ -124,6 +124,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = '/gestion-box/' # A dónde ir después de un login exitoso.
+LOGIN_REDIRECT_URL = '/' # A dónde ir después de un login exitoso.
 LOGOUT_REDIRECT_URL = '/accounts/login/' # A dónde ir después de cerrar sesión.
 LOGIN_URL = '/accounts/login/' # La URL de nuestra página de login.

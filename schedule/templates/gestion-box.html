@@ -327,6 +327,7 @@
             </div>
         </div>
         <nav class="main-nav">
+            <a href="{% url 'homepage' %}" class="nav-button">Inicio</a>
             <a href="{% url 'gestion-box-page' %}" class="nav-button active">Gestión de Box</a>
             <a href="{% url 'professionals-page' %}" class="nav-button">Profesionales</a>
         </nav>
@@ -400,7 +401,8 @@
         // --- DATOS GLOBALES Y CONFIGURACIÓN ---
         let profesionalesData = [];
         let boxesData = [];
-        const HORAS_OPERACION = [ '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00' ];
+        const HORAS_OPERACION = [ '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00' ];
+        const HORAS_GRILLA = HORAS_OPERACION.slice(0, -1);
 
         function getAuthenticatedHeaders() {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -444,23 +446,30 @@
         // --- LÓGICA DE LA GRILLA ---
         function renderGrid(piso) {
             gridContainer.innerHTML = '';
+            
+            // Dibuja la cabecera de la grilla
             const headerRow = document.createElement('div');
             headerRow.className = 'grid-header-row';
             headerRow.innerHTML = '<div class="grid-header-cell empty-header-cell"></div>';
-            HORAS_OPERACION.forEach(hora => {
+
+            // 👇 CAMBIO: Usamos HORAS_GRILLA para definir las columnas y cabeceras
+            gridContainer.style.gridTemplateColumns = `100px repeat(${HORAS_GRILLA.length}, 1fr)`;
+            HORAS_GRILLA.forEach(hora => {
                 headerRow.innerHTML += `<div class="grid-header-cell">${hora}</div>`;
             });
             gridContainer.appendChild(headerRow);
             
             const boxesDelPiso = boxesData.filter(box => box.piso == piso);
-
             boxesDelPiso.sort((a, b) => a.numero - b.numero);
-            
+
+            // Dibuja las filas de los boxes
             boxesDelPiso.forEach(box => {
                 const boxRow = document.createElement('div');
                 boxRow.className = 'box-row';
                 boxRow.innerHTML = `<div class="box-label-cell">Box ${box.numero}</div>`;
-                HORAS_OPERACION.forEach(hora => {
+                
+                // 👇 CAMBIO: Usamos HORAS_GRILLA para crear las celdas de tiempo
+                HORAS_GRILLA.forEach(hora => {
                     const timeSlotCell = document.createElement('div');
                     timeSlotCell.className = 'time-slot disponible';
                     timeSlotCell.dataset.boxNum = box.numero;
@@ -473,7 +482,7 @@
             });
         }
 
-        async function fetchAndDisplaySchedule(piso, fecha) {
+         async function fetchAndDisplaySchedule(piso, fecha) {
             renderGrid(piso);
             const url = `/api/asignaciones/?piso=${piso}&fecha=${fecha}`;
             try {
@@ -481,15 +490,34 @@
                 if (!response.ok) throw new Error('No se pudo obtener el horario.');
                 
                 const asignaciones = await response.json();
+
                 asignaciones.forEach(asignacion => {
-                    const horaInicio = asignacion.hora_inicio.substring(0, 5);
+                    const horaInicioStr = asignacion.hora_inicio.substring(0, 5);
+                    const horaFinStr = asignacion.hora_fin.substring(0, 5);
                     const boxNum = asignacion.box.split(' ')[1];
-                    const cell = gridContainer.querySelector(`.time-slot[data-box-num='${boxNum}'][data-hora='${horaInicio}']`);
-                    if (cell) {
-                        cell.classList.remove('disponible');
-                        cell.classList.add('ocupado');
-                        cell.dataset.assignmentId = asignacion.id;
-                        cell.innerHTML = `<span class="profesional">${asignacion.profesional.nombre}</span><span class="especialidad">${asignacion.profesional.especialidad.nombre}</span>`;
+
+                    // 1. Encontramos los índices de inicio y fin en nuestro array de horas
+                    const startIndex = HORAS_OPERACION.indexOf(horaInicioStr);
+                    const endIndex = HORAS_OPERACION.indexOf(horaFinStr);
+
+                    // 2. Si ambos índices son válidos, recorremos el bloque de tiempo
+                    if (startIndex !== -1 && endIndex !== -1) {
+                        for (let i = startIndex; i < endIndex; i++) {
+                            const horaActual = HORAS_OPERACION[i];
+                            const cell = gridContainer.querySelector(`.time-slot[data-box-num='${boxNum}'][data-hora='${horaActual}']`);
+
+                            if (cell) {
+                                cell.classList.remove('disponible');
+                                cell.classList.add('ocupado');
+                                cell.dataset.assignmentId = asignacion.id;
+
+                                // 3. Ponemos el texto en TODAS las celdas del bloque
+                                cell.innerHTML = `
+                                    <span class="profesional">${asignacion.profesional.nombre}</span>
+                                    <span class="especialidad">${asignacion.profesional.especialidad.nombre}</span>
+                                `;
+                            }
+                        }
                     }
                 });
             } catch (error) {
@@ -498,7 +526,7 @@
             }
         }
         
-        function openAssignModal(mode, data) {
+function openAssignModal(mode, data) {
             assignForm.reset();
             assignForm.dataset.mode = mode;
             
@@ -508,13 +536,18 @@
                 profesionalSelect.appendChild(option);
             });
 
+            // Lógica para rellenar la hora de fin
             const fillHoraFin = (startTime) => {
                 horaFinSelect.innerHTML = '';
                 const startIndex = HORAS_OPERACION.indexOf(startTime);
-                for (let i = startIndex + 1; i < HORAS_OPERACION.length; i++) {
-                    const horaFin = HORAS_OPERACION[i];
-                    const option = new Option(horaFin, `${horaFin}:00`);
-                    horaFinSelect.appendChild(option);
+                
+                // El bucle ahora irá hasta el final del array, incluido el último elemento
+                if (startIndex !== -1) {
+                    for (let i = startIndex + 1; i < HORAS_OPERACION.length; i++) {
+                        const horaFin = HORAS_OPERACION[i];
+                        const option = new Option(horaFin, `${horaFin}:00`);
+                        horaFinSelect.appendChild(option);
+                    }
                 }
             };
             
@@ -526,8 +559,17 @@
                 assignForm.dataset.boxId = data.boxId;
                 document.getElementById('modal-box-num').textContent = `Box ${data.boxNum}`;
                 document.getElementById('modal-hora-inicio').textContent = data.hora;
+                
                 fillHoraFin(data.hora);
-                if (horaFinSelect.options.length > 0) horaFinSelect.value = `${HORAS_OPERACION[HORAS_OPERACION.indexOf(data.hora) + 1]}:00`;
+
+                // ⭐️ LÓGICA CORREGIDA PARA ASIGNAR VALOR POR DEFECTO ⭐️
+                const startIndex = HORAS_OPERACION.indexOf(data.hora);
+                if (startIndex !== -1 && startIndex + 1 < HORAS_OPERACION.length) {
+                    horaFinSelect.value = `${HORAS_OPERACION[startIndex + 1]}:00`;
+                } else if (horaFinSelect.options.length === 0) {
+                    horaFinSelect.innerHTML = '<option value="">No hay horarios de fin</option>';
+                }
+
 
             } else if (mode === 'edit') {
                 modalTitle.textContent = 'Editar Asignación';
@@ -540,6 +582,7 @@
                 document.getElementById('modal-hora-inicio').textContent = horaInicio;
                 profesionalSelect.value = data.profesional.id;
                 especialidadDisplay.value = data.profesional.especialidad.nombre;
+                
                 fillHoraFin(horaInicio);
                 horaFinSelect.value = data.hora_fin;
             }

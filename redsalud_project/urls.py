@@ -19,6 +19,7 @@ from django.urls import path, include
 from schedule import views as schedule_views 
 
 urlpatterns = [
+    path('', schedule_views.homepage_view, name='homepage'),
     path('admin/', admin.site.urls),
     path('api/', include('schedule.urls')),
     path('profesionales/', schedule_views.professionals_page, name='professionals-page'),
