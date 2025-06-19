@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- VARIABLES DE COLOR --- */
         :root {
             --color-primario: #00A79D;
             --color-fondo: #f4f7f9;
@@ -44,7 +43,6 @@
             box-shadow: 0 4px 12px var(--color-sombra);
         }
 
-        /* --- CABECERA Y CONTROLES --- */
         .header-controls {
             display: flex;
             justify-content: space-between;
@@ -110,7 +108,6 @@
             border-color: var(--color-primario);
         }
 
-        /* --- GRILLA DE HORARIOS --- */
         .schedule-grid-container {
             display: grid;
             border: 1px solid var(--color-borde);
@@ -202,7 +199,6 @@
             font-size: 0.7rem;
         }
 
-        /* --- ESTILOS DEL MODAL --- */
         .modal-backdrop {
             position: fixed;
             top: 0;
@@ -304,14 +300,14 @@
             border-color: var(--color-primario);
         }
         .logout-button-styled {
-            background-color: #E94E77; /* Color rojo/rosado similar al de la imagen */
+            background-color: #E94E77;
             color: white;
             border: none;
-            border-radius: 50px; /* Esquinas totalmente redondeadas para la forma de píldora */
-            padding: 10px 20px; /* Relleno para darle cuerpo */
-            font-family: 'Roboto', sans-serif; /* Mantenemos la fuente */
+            border-radius: 50px; 
+            padding: 10px 20px; 
+            font-family: 'Roboto', sans-serif; 
             font-size: 1rem;
-            font-weight: 700; /* Texto en negrita */
+            font-weight: 700;
             cursor: pointer;
     
     
@@ -322,7 +318,7 @@
         }
 
 
-        .logout-button-styled:hover {background-color: #D93A54; /* Un tono ligeramente más oscuro */}
+        .logout-button-styled:hover {background-color: #D93A54; }
     </style>
 </head>
 <body>
@@ -336,9 +332,10 @@
                     <option value="5">Piso 5</option>
                     <option value="6">Piso 6</option>
                     <option value="7">Piso 7</option>
+                    <option value="8">Piso 8</option>
+                    <option value="9">Piso 9</option>
                 </select>
                 <input type="date" id="date-selector" style="padding: 0.65rem; border: 1px solid var(--color-borde); border-radius: 6px; font-size: 1rem;">
-                <button class="save-button">Guardar Cambios</button>
                 <form method="post" action="{% url 'logout' %}" style="margin: 0; padding: 0; display: inline;">
                         {% csrf_token %}
                 <button type="submit" class="logout-button-styled">Cerrar Sesión</button>
