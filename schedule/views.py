@@ -99,39 +99,30 @@ def gestion_box_page(request):
 @permission_classes([permissions.IsAuthenticated])
 def dashboard_stats_view(request):
     """
-    Calcula estadísticas y devuelve las próximas citas dentro de un rango
-    de los próximos 2 días.
+    Devuelve tanto las estadísticas del día como la lista completa de asignaciones,
+    ordenadas por número de box y hora.
     """
-    now = timezone.localtime()
-    today = now.date()
-    current_time = now.time()
+    today = timezone.localdate(timezone.now())
 
-    # Calculamos la fecha límite (hoy + 2 días)
-    fecha_limite = today + datetime.timedelta(days=2)
-
-    # --- INICIO DE LA NUEVA LÓGICA DE CONSULTA ---
+    # 1. Obtenemos el queryset base con todas las citas de hoy
+    todays_schedule_qs = Asignacion.objects.filter(
+        fecha=today
+    ).order_by('box__numero', 'hora_inicio')
     
-    # 1. Total de citas para hoy (esto no cambia)
-    citas_hoy_count = Asignacion.objects.filter(fecha=today).count()
+    # 2. Calculamos las estadísticas a partir de este queryset
+    citas_hoy_count = todays_schedule_qs.count()
+    profesionales_activos_count = todays_schedule_qs.values('profesional').distinct().count()
 
-    # 2. Total de profesionales únicos con citas hoy (esto no cambia)
-    profesionales_activos_count = Asignacion.objects.filter(fecha=today).values('profesional').distinct().count()
+    # 3. Serializamos la lista completa para la tabla
+    schedule_serializer = AsignacionReadSerializer(todays_schedule_qs, many=True)
 
-    # 3. Próximas citas dentro de los próximos 2 días
-    proximas_citas_qs = Asignacion.objects.filter(
-        # CONDICIÓN A: Citas para HOY, pero solo desde la hora actual en adelante
-        Q(fecha=today, hora_inicio__gte=current_time) |
-        
-        # O... CONDICIÓN B: Citas para los próximos 2 días (mañana y pasado mañana)
-        Q(fecha__gt=today, fecha__lte=fecha_limite)
-    ).order_by('fecha', 'hora_inicio')[:5] # Ordenamos y tomamos las 5 primeras
-
-    proximas_citas_serializer = AsignacionReadSerializer(proximas_citas_qs, many=True)
-
+    # 4. Construimos la respuesta JSON anidada
     data = {
-        'citas_hoy': citas_hoy_count,
-        'profesionales_activos_hoy': profesionales_activos_count,
-        'proximas_citas': proximas_citas_serializer.data
+        'stats': {
+            'citas_hoy': citas_hoy_count,
+            'profesionales_activos_hoy': profesionales_activos_count,
+        },
+        'schedule': schedule_serializer.data
     }
     
     return Response(data)

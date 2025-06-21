@@ -1,81 +1,81 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Inicio - RedSalud</title>
+    {% load static %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+
+
         :root {
-            --color-primario: #00A79D;
-            --color-fondo: #f4f7f9;
-            --color-blanco: #ffffff;
-            --color-texto: #333;
-            --color-borde: #e0e6ed;
-            --color-sombra: rgba(0, 0, 0, 0.05);
-            --color-azul-stat: #007bff;
+            --color-primario: #00A79D; --color-fondo: #f4f7f9; --color-blanco: #ffffff; --color-texto: #333; --color-borde: #e0e6ed; --color-sombra: rgba(0, 0, 0, 0.05); --color-azul-stat: #007bff;
         }
-        .logout-button-styled {
-    background-color: #E94E77; /* Color rojo/rosado similar al de la imagen */
-    color: white;
-    border: none;
-    border-radius: 50px; /* Esquinas totalmente redondeadas para la forma de píldora */
-    padding: 10px 20px; /* Relleno para darle cuerpo */
-    font-family: 'Roboto', sans-serif; /* Mantenemos la fuente */
-    font-size: 1rem;
-    font-weight: 700; /* Texto en negrita */
-    cursor: pointer;
-    
-    /* Flexbox para alinear el texto y el ícono */
-    display: inline-flex;
-    align-items: center;
-    gap: 8px; /* Espacio entre el texto y el ícono */
-
-    /* Transición suave para el efecto hover */
-    transition: background-color 0.2s ease-in-out;
-}
-
-
-        .logout-button-styled:hover {background-color: #D93A54; /* Un tono ligeramente más oscuro */}
         body { font-family: 'Roboto', sans-serif; background-color: var(--color-fondo); color: var(--color-texto); margin: 0; }
         .main-container { padding: 2rem; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .header h1 { margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding: 0 1rem; }
+        .header-left { display: flex; align-items: center; gap: 1.5rem; }
+        .header-logo { max-height: 40px; width: auto; }
         .logout-form { margin: 0; }
         .logout-button { background:none; border:none; color:var(--color-azul-stat); cursor:pointer; font-size: 1rem; padding: 0; }
         .main-nav { display: flex; gap: 0.5rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-borde); }
         .nav-button { text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 500; color: var(--color-primario); background-color: transparent; border: 1px solid transparent; transition: all 0.2s ease-in-out; }
         .nav-button:hover { border-color: var(--color-primario); background-color: #e6f6f5; }
         .nav-button.active { background-color: var(--color-primario); color: var(--color-blanco); border-color: var(--color-primario); }
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .content-panel { background-color: var(--color-blanco); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px var(--color-sombra); }
+        .content-panel h2 { margin-top: 0; }
+
+        /* Estilos para las tarjetas de estadísticas */
+        .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem; }
         .stat-card { background-color: var(--color-blanco); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px var(--color-sombra); text-align: center; }
         .stat-card .value { font-size: 4rem; font-weight: 700; color: var(--color-azul-stat); line-height: 1; }
         .stat-card .label { font-size: 1.2rem; color: #666; margin-top: 0.5rem; }
-        .proximas-citas { grid-column: 1 / -1; background-color: var(--color-blanco); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px var(--color-sombra); }
-        .proximas-citas h2 { margin-top: 0; }
-        .citas-lista { list-style: none; padding: 0; margin: 0; }
-        .citas-lista li { display: flex; justify-content: space-between; padding: 1rem; border-bottom: 1px solid var(--color-borde); }
-        .citas-lista li:last-child { border-bottom: none; }
-        .citas-lista .info strong { color: var(--color-texto); }
-        .citas-lista .hora { font-weight: 700; font-size: 1.2rem; color: var(--color-primario); }
+
+        /* Estilos para la tabla */
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--color-borde); }
+        thead { background-color: var(--color-fondo); }
+        th { font-weight: 500; text-transform: uppercase; font-size: 0.85rem; color: #666; }
+        tbody tr:hover { background-color: #f9fafb; }
+
+        .logout-button-styled {
+            background-color: #E94E77;
+            color: white;
+            border: none;
+            border-radius: 50px; 
+            padding: 10px 20px; 
+            font-family: 'Roboto', sans-serif; 
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+    
+    
+            display: inline-flex;
+            align-items: center;
+            gap: 8px; 
+            transition: background-color 0.2s ease-in-out;
+        }
+
+
+        .logout-button-styled:hover {background-color: #D93A54; }
     </style>
 </head>
 <body>
     <div class="main-container">
         <header class="header">
-    <div class="header-left">
-        <img src="{% static 'logo.png' %}" alt="Logo de RedSalud" class="header-logo">
-        </div>
-    <div class="header-right">
-        <form method="post" action="{% url 'logout' %}" class="logout-form">
-            {% csrf_token %}
-            <button type="submit" class="logout-button-styled">Cerrar Sesión</button>
-        </form>
-    </div>
-</header>
+            <div class="header-left">
+                <img src="{% static 'logo.png' %}" alt="Logo de RedSalud" class="header-logo">
+            </div>
+            <div class="header-right">
+                <form method="post" action="{% url 'logout' %}" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-button-styled">Cerrar Sesión</button>
+                </form>
+            </div>
+        </header>
 
         <nav class="main-nav">
             <a href="{% url 'homepage' %}" class="nav-button active">Inicio</a>
@@ -84,7 +84,7 @@
             <a href="{% url 'professionals-page' %}" class="nav-button">Profesionales</a>
         </nav>
         
-        <div class="dashboard-grid">
+        <div class="stats-container">
             <div class="stat-card">
                 <div id="citas-hoy-value" class="value">...</div>
                 <div class="label">Citas Programadas para Hoy</div>
@@ -93,18 +93,33 @@
                 <div id="profesionales-activos-value" class="value">...</div>
                 <div class="label">Profesionales Activos Hoy</div>
             </div>
+        </div>
 
-            <div class="proximas-citas">
-                <h2>Próximas Citas</h2>
-                <ul id="proximas-citas-lista" class="citas-lista">
-                    <li id="loading-citas">Cargando...</li>
-                </ul>
-            </div>
+        <div class="content-panel">
+            <h2>Agenda del Día</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Hora Fin</th>
+                        <th>Box</th>
+                        <th>Profesional</th>
+                        <th>Especialidad</th>
+                    </tr>
+                </thead>
+                <tbody id="daily-schedule-body">
+                    <tr><td colspan="4" style="text-align: center;">Cargando agenda...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
+            const citasHoyValue = document.getElementById('citas-hoy-value');
+            const profesionalesActivosValue = document.getElementById('profesionales-activos-value');
+            const tableBody = document.getElementById('daily-schedule-body');
+
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
             csrfInput.name = 'csrfmiddlewaretoken';
@@ -112,50 +127,46 @@
             document.body.appendChild(csrfInput);
 
             function getAuthenticatedHeaders() {
-                return {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfInput.value
-                };
+                return { 'Content-Type': 'application/json', 'X-CSRFToken': csrfInput.value };
             }
 
             try {
-                // Llamamos a la nueva URL de la API
                 const response = await fetch('/api/dashboard-stats/', { headers: getAuthenticatedHeaders() });
-                if (!response.ok) throw new Error('No se pudo cargar los datos del dashboard.');
-
+                if (!response.ok) throw new Error('No se pudo cargar la información del dashboard.');
                 const data = await response.json();
                 
-                // Actualizamos las tarjetas de estadísticas
-                document.getElementById('citas-hoy-value').textContent = data.citas_hoy;
-                document.getElementById('profesionales-activos-value').textContent = data.profesionales_activos_hoy;
+                // 1. Llenamos las tarjetas de estadísticas
+                citasHoyValue.textContent = data.stats.citas_hoy;
+                profesionalesActivosValue.textContent = data.stats.profesionales_activos_hoy;
 
-                // Llenamos la lista de próximas citas
-                const listaCitas = document.getElementById('proximas-citas-lista');
-                listaCitas.innerHTML = ''; // Limpiamos el "Cargando..."
-
-                if (data.proximas_citas.length > 0) {
-                    data.proximas_citas.forEach(cita => {
-                        const li = document.createElement('li');
-                        const hora = cita.hora_inicio.substring(0, 5);
-                        li.innerHTML = `
-                            <div class="hora">${hora}</div>
-                            <div class="info">
-                                <strong>${cita.profesional.nombre}</strong><br>
-                                <span>${cita.profesional.especialidad.nombre}</span>
-                            </div>
-                            <div class="box">${cita.box}</div>
+                // 2. Llenamos la tabla de la agenda
+                const scheduleData = data.schedule;
+                tableBody.innerHTML = '';
+                if (scheduleData.length > 0) {
+                    scheduleData.forEach(cita => {
+                        const row = document.createElement('tr');
+                        const horaInicio = cita.hora_inicio.substring(0, 5);
+                        const horaFin = cita.hora_fin.substring(0, 5); // Dato de hora de fin
+                        
+                        // innerHTML actualizado con la nueva celda
+                        row.innerHTML = `
+                            <td>${horaInicio}</td>
+                            <td>${horaFin}</td>
+                            <td>${cita.box}</td>
+                            <td>${cita.profesional.nombre}</td>
+                            <td>${cita.profesional.especialidad.nombre}</td>
                         `;
-                        listaCitas.appendChild(li);
+                        tableBody.appendChild(row);
                     });
                 } else {
-                    listaCitas.innerHTML = '<li>No hay más citas programadas para hoy.</li>';
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay citas programadas para hoy.</td></tr>';
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('citas-hoy-value').textContent = 'Error';
-                document.getElementById('profesionales-activos-value').textContent = 'Error';
-                document.getElementById('proximas-citas-lista').innerHTML = '<li>Error al cargar las citas.</li>';
+                citasHoyValue.textContent = 'Error';
+                profesionalesActivosValue.textContent = 'Error';
+                tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">${error.message}</td></tr>`;
             }
         });
     </script>
