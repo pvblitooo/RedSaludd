@@ -47,3 +47,7 @@ pip install django-filter
 git clone https://github.com/pvblitooo/RedSaludd.git
 cd RedSaludd
 ```
+**3. Ejecutar App**
+```bash
+python manage.py runserver
+```
